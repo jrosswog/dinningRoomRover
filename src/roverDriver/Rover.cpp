@@ -10,8 +10,10 @@ void Rover::begin(){
   _rightMotor = AccelStepper(AccelStepper::HALF4WIRE, _rightMotorPins[0], _rightMotorPins[2], _rightMotorPins[1], _rightMotorPins[3]);
   _leftMotor = AccelStepper(AccelStepper::HALF4WIRE, _leftMotorPins[0], _leftMotorPins[2], _leftMotorPins[1], _leftMotorPins[3]); 
   _rightMotor.setMaxSpeed(_maxSpeed);
+  _rightMotor.setAcceleration(_acceleration);
   _rightMotor.setSpeed(_maxSpeed);
   _leftMotor.setMaxSpeed(_maxSpeed);
+  _leftMotor.setAcceleration(_acceleration);
   _leftMotor.setSpeed(_maxSpeed);
 }
 
@@ -22,7 +24,7 @@ int Rover::cmToSteps(float distanceInCm){
 }
 
 // Instructs the motor to move a given distance
-void Rover::moveMotorCm(AccelStepper motor, float distanceCm){
+void Rover::moveMotorCm(AccelStepper& motor, float distanceCm){
   int steps = cmToSteps(distanceCm);
   motor.setCurrentPosition(0);
   motor.move(steps);
@@ -31,20 +33,20 @@ void Rover::moveMotorCm(AccelStepper motor, float distanceCm){
 // Instructs the rover to move forward
 void Rover::moveForward(float distanceInCm){
   moveMotorCm(_rightMotor, distanceInCm);
-  moveMotorCm(_leftMotor, distanceInCm);
+  moveMotorCm(_leftMotor, -1*distanceInCm);
 }
 
 void Rover::turn(float degrees){
-  float fracOfCircle = degrees/360.0;
+  float fracOfCircle = abs(degrees/360.0);
   float turnRadiusInCm = _wheelBaseInCm / 2.0;
   float turnCircumInCm = 2.0 * pi * turnRadiusInCm;
   float turnDistanceInCm = fracOfCircle * turnCircumInCm;
   //Turn right (move left motor) if angle is positive, else turn left
-  AccelStepper motor = _rightMotor;
-  if(turnDistanceInCm > 0.0){
-    motor = _leftMotor;
+  if(degrees > 0.0){
+    moveMotorCm(_leftMotor, -1 * turnDistanceInCm);
+  }else{
+    moveMotorCm(_rightMotor, turnDistanceInCm);
   }
-  moveMotorCm(motor, turnDistanceInCm);
 }
 
 bool Rover::instructionsComplete(){ 

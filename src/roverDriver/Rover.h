@@ -50,8 +50,7 @@ class Rover{
     float _acceleration = 100.0;
     int _rightMotorPins[4] = {7,6,5,4};
     int _leftMotorPins[4] = {11,10,9,8};
-    // TDOO: need to measure this
-    float _wheelBaseInCm = 10.0;
+    float _wheelBaseInCm = 11.0;
     float _wheelCircumInCm = 18.0;
     // The 28BYJ-48 needs to be operated in half-step mode, ie an 8 pulse sequence - the standard Arduino Stepper library can't do this.
     // The 28BYJ-48 coils need to be energised in the pin sequence 1,3,2,4, rather than the standard 1,2,3,4 sequence
@@ -59,7 +58,7 @@ class Rover{
     AccelStepper _rightMotor = AccelStepper(AccelStepper::HALF4WIRE,_rightMotorPins[0], _rightMotorPins[2], _rightMotorPins[1], _rightMotorPins[3]);
     AccelStepper _leftMotor = AccelStepper(AccelStepper::HALF4WIRE,_leftMotorPins[0], _leftMotorPins[2], _leftMotorPins[1], _leftMotorPins[3]);
     int cmToSteps(float distanceInCm);
-    void moveMotorCm(AccelStepper motor, float distanceCm);
+    void moveMotorCm(AccelStepper& motor, float distanceCm);
 };
 
 #endif
