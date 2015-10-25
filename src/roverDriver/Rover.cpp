@@ -49,7 +49,7 @@ void Rover::turn(float degrees){
   }
 }
 
-bool Rover::instructionsComplete(){ 
+bool Rover::currentTaskComplete(){ 
   bool complete = false; 
   if(_rightMotor.distanceToGo()==0 || _leftMotor.distanceToGo()==0){
     complete = true;
@@ -57,7 +57,29 @@ bool Rover::instructionsComplete(){
   return complete;
 }
 
+bool Rover::instructionsComplete(){
+  bool complete = false;
+  if(isTaskQueueEmpty() && currentTaskComplete()){
+      complete = true;
+  }
+  return complete;
+}
+
+void Rover::executeTask(instruction task){
+    switch(task.command){
+      case FORWARD :
+        moveForward(task.distance);
+        break;
+      case TURN : 
+        turn(task.distance);
+        break;
+    }
+}
+
 void Rover::execute(){
+  if(currentTaskComplete() && !isTaskQueueEmpty()){
+    executeTask(getNextTask());
+  }
   _rightMotor.run();
   _leftMotor.run();
 }
@@ -76,6 +98,41 @@ void Rover::setRightMotorPins(int pins[4]){
 
 void Rover::setLeftMotorPins(int pins[4]){
   memcpy(&_leftMotorPins, &pins, sizeof _leftMotorPins);
+}
+
+int Rover::getNextTaskIndex(int currentIndex){
+  return (currentIndex + 1) % _taskQueueSize;
+}
+
+int Rover::addInstruction(instruction task){
+  int newHeadIndex = getNextTaskIndex(_taskQueueHeadIndex);
+  if (newHeadIndex == _taskQueueTailIndex){
+    // Queue is full!!!
+    return -1;
+  }
+  _taskQueueHeadIndex = newHeadIndex;
+  _taskQueue[_taskQueueHeadIndex] = task;
+  return 0;
+}
+
+int Rover::addTask(command_enum command, float distance){
+  return addInstruction({.command = command, .distance = distance});
+}
+
+bool Rover::isTaskQueueEmpty(){
+  return (_taskQueueHeadIndex == _taskQueueTailIndex);
+}
+
+instruction Rover::getNextTask(){
+  instruction task;
+  if(isTaskQueueEmpty()){
+    task.command = NOOP;
+    task.distance = 0.0;
+  }else{
+    _taskQueueTailIndex = getNextTaskIndex(_taskQueueTailIndex);
+    task = _taskQueue[_taskQueueTailIndex];
+  }
+  return task;
 }
 
 

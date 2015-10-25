@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include <AccelStepper.h>
 
-typedef enum {FORWARD, TURN} command_enum;
+typedef enum {FORWARD, TURN, NOOP} command_enum;
 typedef struct {
   command_enum command;
   float distance;
@@ -42,6 +42,14 @@ class Rover{
 
     // set the pins for the left motor
     void setLeftMotorPins(int pins[4]);
+
+    // adds an instruction to the the queue of tasks
+    // return 0 for success and non zero if the task was not add
+    int addInstruction(instruction task);
+
+    // adds a task to the the queue of tasks
+    // return 0 for success and non zero if the task was not add
+    int addTask(command_enum command, float distance);
     
   private:
     const float pi = 3.14159;
@@ -52,6 +60,13 @@ class Rover{
     int _leftMotorPins[4] = {11,10,9,8};
     float _wheelBaseInCm = 11.0;
     float _wheelCircumInCm = 18.0;
+
+    //task queue - Queue of actions for the rover
+    static const int _taskQueueSize = 50;
+    instruction _taskQueue[_taskQueueSize];
+    int _taskQueueHeadIndex = 0;
+    int _taskQueueTailIndex = 0;
+    
     // The 28BYJ-48 needs to be operated in half-step mode, ie an 8 pulse sequence - the standard Arduino Stepper library can't do this.
     // The 28BYJ-48 coils need to be energised in the pin sequence 1,3,2,4, rather than the standard 1,2,3,4 sequence
     // http://www.element14.com/community/people/neilk/blog/2015/01/24/arduino-controlling-stepper-motor-28byj-48-with-accelstepper-library
@@ -59,6 +74,14 @@ class Rover{
     AccelStepper _leftMotor = AccelStepper(AccelStepper::HALF4WIRE,_leftMotorPins[0], _leftMotorPins[2], _leftMotorPins[1], _leftMotorPins[3]);
     int cmToSteps(float distanceInCm);
     void moveMotorCm(AccelStepper& motor, float distanceCm);
+    bool isTaskQueueEmpty();
+    instruction getNextTask();
+    //Computes the next index in the circular buffer
+    int getNextTaskIndex(int currentIndex);
+    // return true if the task the rover is working on is complete. False otherwise
+    bool currentTaskComplete();
+    // execute the given instruction
+    void executeTask(instruction task);
 };
 
 #endif
