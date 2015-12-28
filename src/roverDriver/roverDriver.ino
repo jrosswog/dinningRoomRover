@@ -7,11 +7,20 @@ Rover roverController = Rover();
 void setup() {
   Serial.begin(9600);
   Serial.print("Staring Dinning Room Rover!!");
+  Serial.print("\n");
   roverController.begin();
-  // roverController.moveForward(1000.0);
-  // roverController.turn(90.0);
-  roverController.addTask(FORWARD, 100.0);
-  roverController.addTask(TURN, 90.0);
+  
+  // roverController.addTask(FORWARD, 240.0);
+  // roverController.addTask(TURN, 90.0);
+  roverController.addTask(FORWARD,223.52);
+  roverController.addTask(TURN,90.0);
+  roverController.addTask(FORWARD,217.1);
+  roverController.addTask(TURN,90.0);
+  roverController.addTask(FORWARD,223.52);
+  roverController.addTask(TURN,90.0);
+  roverController.addTask(FORWARD,217.1);
+  roverController.addTask(TURN,90.0);
+  
 }
 
 void loop() {

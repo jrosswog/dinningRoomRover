@@ -18,40 +18,52 @@ void Rover::begin(){
 }
 
 // Converts CM to steps
-int Rover::cmToSteps(float distanceInCm){
-  int steps = (int)((distanceInCm / _wheelCircumInCm) * _stepsPerRev);
+long Rover::cmToSteps(float distanceInCm){
+  Serial.print("Converting CM to Steps CM: ");
+  Serial.print(distanceInCm);
+  Serial.print(" steps: ");
+  
+  long steps = (long)((distanceInCm / _wheelCircumInCm) * _stepsPerRev);
+  Serial.print(steps);
+  Serial.print("\n");
   return steps;
 }
 
 // Instructs the motor to move a given distance
 void Rover::moveMotorCm(AccelStepper& motor, float distanceCm){
-  int steps = cmToSteps(distanceCm);
+  long steps = cmToSteps(distanceCm);
   motor.setCurrentPosition(0);
+  Serial.print("Moving motor steps: ");
+  Serial.print(steps);
+  Serial.print("\n");
   motor.move(steps);
 }
 
 // Instructs the rover to move forward
 void Rover::moveForward(float distanceInCm){
   moveMotorCm(_rightMotor, distanceInCm);
-  moveMotorCm(_leftMotor, -1*distanceInCm);
+  moveMotorCm(_leftMotor, -1 * distanceInCm);
 }
 
 void Rover::turn(float degrees){
   float fracOfCircle = abs(degrees/360.0);
-  float turnRadiusInCm = _wheelBaseInCm / 2.0;
+  float turnRadiusInCm = _wheelBaseInCm;
   float turnCircumInCm = 2.0 * pi * turnRadiusInCm;
   float turnDistanceInCm = fracOfCircle * turnCircumInCm;
   //Turn right (move left motor) if angle is positive, else turn left
+  
   if(degrees > 0.0){
     moveMotorCm(_leftMotor, -1 * turnDistanceInCm);
+    // moveMotorCm(_rightMotor, -1 * turnDistanceInCm);
   }else{
     moveMotorCm(_rightMotor, turnDistanceInCm);
+    // moveMotorCm(_leftMotor, turnDistanceInCm);
   }
 }
 
 bool Rover::currentTaskComplete(){ 
   bool complete = false; 
-  if(_rightMotor.distanceToGo()==0 || _leftMotor.distanceToGo()==0){
+  if(_rightMotor.distanceToGo()==0 && _leftMotor.distanceToGo()==0){
     complete = true;
   }
   return complete;
@@ -68,9 +80,15 @@ bool Rover::instructionsComplete(){
 void Rover::executeTask(instruction task){
     switch(task.command){
       case FORWARD :
+        Serial.print("Executing FORWARD command ");
+        Serial.print(task.distance);
+        Serial.print("\n");
         moveForward(task.distance);
         break;
-      case TURN : 
+      case TURN :
+        Serial.print("Executing TURN command ");
+        Serial.print(task.distance);
+        Serial.print("\n"); 
         turn(task.distance);
         break;
     }
@@ -105,13 +123,44 @@ int Rover::getNextTaskIndex(int currentIndex){
 }
 
 int Rover::addInstruction(instruction task){
+  float distInCm = 0.0;
   int newHeadIndex = getNextTaskIndex(_taskQueueHeadIndex);
   if (newHeadIndex == _taskQueueTailIndex){
     // Queue is full!!!
+    Serial.print("Task Queue Full!\n");
     return -1;
   }
   _taskQueueHeadIndex = newHeadIndex;
-  _taskQueue[_taskQueueHeadIndex] = task;
+ 
+  switch(task.command){
+      case FORWARD :
+        distInCm = task.distance;
+        if(distInCm > _maxCmToMove){
+          Serial.print("Adding Forward task at idex ");
+          Serial.print(_taskQueueHeadIndex);
+          Serial.print("\n");
+          Serial.print(_maxCmToMove);
+          Serial.print("\n");
+          _taskQueue[_taskQueueHeadIndex] = {.command = task.command, .distance = _maxCmToMove};
+          addInstruction({.command = task.command, .distance = distInCm - _maxCmToMove});
+        }else if(distInCm > 0.0){
+          Serial.print("Adding Forward task at idex ");
+          Serial.print(_taskQueueHeadIndex);
+          Serial.print("\n");
+          Serial.print(distInCm);
+          Serial.print("\n");
+          _taskQueue[_taskQueueHeadIndex] = task;
+        }
+        break;
+      case TURN :
+      Serial.print("Adding TURN task at idex ");
+          Serial.print(_taskQueueHeadIndex);
+          Serial.print("\n");
+          Serial.print(task.distance);
+          Serial.print("\n");
+        _taskQueue[_taskQueueHeadIndex] = task;
+        break;
+  }
   return 0;
 }
 

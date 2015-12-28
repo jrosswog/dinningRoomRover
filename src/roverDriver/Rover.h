@@ -53,13 +53,15 @@ class Rover{
     
   private:
     const float pi = 3.14159;
-    int _stepsPerRev = 64 * 64;
+    long _stepsPerRev = 64 * 64;
     float _maxSpeed = 600.0;
+    // float _maxSpeed = 100.0;
     float _acceleration = 100.0;
     int _rightMotorPins[4] = {7,6,5,4};
     int _leftMotorPins[4] = {11,10,9,8};
     float _wheelBaseInCm = 11.0;
     float _wheelCircumInCm = 18.0;
+    float _maxCmToMove = (pow(2.0,30.0)/(float)_stepsPerRev) * _wheelCircumInCm;
 
     //task queue - Queue of actions for the rover
     static const int _taskQueueSize = 50;
@@ -72,7 +74,7 @@ class Rover{
     // http://www.element14.com/community/people/neilk/blog/2015/01/24/arduino-controlling-stepper-motor-28byj-48-with-accelstepper-library
     AccelStepper _rightMotor = AccelStepper(AccelStepper::HALF4WIRE,_rightMotorPins[0], _rightMotorPins[2], _rightMotorPins[1], _rightMotorPins[3]);
     AccelStepper _leftMotor = AccelStepper(AccelStepper::HALF4WIRE,_leftMotorPins[0], _leftMotorPins[2], _leftMotorPins[1], _leftMotorPins[3]);
-    int cmToSteps(float distanceInCm);
+    long cmToSteps(float distanceInCm);
     void moveMotorCm(AccelStepper& motor, float distanceCm);
     bool isTaskQueueEmpty();
     instruction getNextTask();
